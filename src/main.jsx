@@ -519,7 +519,7 @@ function CheckersGame() {
             <span>{winner ? `${capitalize(winner)} wins` : message}</span>
             <small>{streakText(winStreak)}</small>
             <button type="button" onClick={resetGame}>
-              Nova Partida {currentDeep}
+              Nova Partida 
             </button>
           </div>
           <div className={currentPlayer === 'black' ? 'score active' : 'score'}>
