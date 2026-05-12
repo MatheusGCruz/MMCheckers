@@ -319,7 +319,36 @@ function evaluateBoard(board) {
   }, mobility * 0.06);
 }
 
-function minimax(board, player, depth, alpha = -Infinity, beta = Infinity) {
+function getAiMoveRankWeights(deepness) {
+  const bestMoveWeight = Math.min(Math.max(deepness * 0.1, 0), 1);
+  const otherMoveWeight = (1 - bestMoveWeight) / 2;
+
+  return [
+    { rank: 2, weight: otherMoveWeight },
+    { rank: 1, weight: otherMoveWeight },
+    { rank: 0, weight: bestMoveWeight },
+  ];
+}
+
+function pickWeightedRankedMove(scoredMoves, maximizing, deepness) {
+  const rankedMoves = [...scoredMoves].sort((a, b) => (
+    maximizing ? b.score - a.score : a.score - b.score
+  ));
+  const weightedMoves = getAiMoveRankWeights(deepness)
+    .map(({ rank, weight }) => ({ move: rankedMoves[rank]?.move, weight }))
+    .filter(({ move }) => move);
+  const totalWeight = weightedMoves.reduce((sum, { weight }) => sum + weight, 0);
+  let roll = Math.random() * totalWeight;
+
+  for (const { move, weight } of weightedMoves) {
+    roll -= weight;
+    if (roll <= 0) return move;
+  }
+
+  return weightedMoves.at(-1)?.move ?? null;
+}
+
+function minimax(board, player, depth, alpha = -Infinity, beta = Infinity, weightedMove = true) {
   const winner = getWinnerForBoard(board, player);
 
   if (winner === AI_PLAYER) return { score: 1000 + depth, move: null };
@@ -331,9 +360,11 @@ function minimax(board, player, depth, alpha = -Infinity, beta = Infinity) {
   let bestMove = null;
   let bestScore = maximizing ? -Infinity : Infinity;
   const nextPlayer = player === 'white' ? 'black' : 'white';
+  const scoredMoves = weightedMove ? [] : null;
 
   for (const move of moves) {
-    const result = minimax(move.board, nextPlayer, depth - 1, alpha, beta);
+    const result = minimax(move.board, nextPlayer, depth - 1, alpha, beta, false);
+    scoredMoves?.push({ move, score: result.score });
 
     if (maximizing ? result.score > bestScore : result.score < bestScore) {
       bestScore = result.score;
@@ -346,10 +377,13 @@ function minimax(board, player, depth, alpha = -Infinity, beta = Infinity) {
       beta = Math.min(beta, bestScore);
     }
 
-    if (beta <= alpha) break;
+    if (!weightedMove && beta <= alpha) break;
   }
 
-  return { score: bestScore, move: bestMove };
+  return {
+    score: bestScore,
+    move: weightedMove ? pickWeightedRankedMove(scoredMoves, maximizing, depth) : bestMove,
+  };
 }
 
 function findBestAiMove(board, counts, matchWins, setMessage, setCurrentDeep) {
