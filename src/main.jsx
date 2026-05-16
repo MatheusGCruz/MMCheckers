@@ -31,8 +31,8 @@ import trashVictory7 from '../sounds/victorytalk/pt-br7.mp3';
 const BOARD_SIZE = 8;
 const HUMAN_PLAYER = 'white';
 const AI_PLAYER = 'black';
-const MINIMAX_DEEPNESS = 1;
-const TRASH_THRESHOLD = 4;
+const MINIMAX_DEEPNESS = 4;
+const TRASH_THRESHOLD = 7;
 const DIAGONAL_DIRECTIONS = [
   [-1, -1],
   [-1, 1],
